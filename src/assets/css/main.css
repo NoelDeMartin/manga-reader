@@ -2,3 +2,9 @@
 @import '@aerogel/plugin-solid';
 @import '@aerogel/plugin-local-first';
 @import '@aerogel/plugin-routing';
+
+:root {
+    --color-background: #1a1a1a;
+    --color-primary: #007bff;
+    --color-primary-text: #ffffff;
+}
