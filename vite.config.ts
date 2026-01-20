@@ -12,7 +12,34 @@ export default defineConfig({
     base: process.env.NODE_ENV === 'production' ? '/manga-reader/' : '/',
     publicDir: fileURLToPath(new URL('./src/assets/public/', import.meta.url)),
     plugins: [
-        Aerogel({ name: 'Manga Reader' }),
+        Aerogel({
+            name: 'Manga Reader',
+            description: '日本語を勉強しましょう！',
+            baseUrl: 'https://noeldemartin.github.io/manga-reader/',
+            themeColor: '#000',
+            icons: [
+                {
+                    src: 'icons/transparent-512x512.png',
+                    sizes: '512x512',
+                    purpose: 'any',
+                },
+                {
+                    src: 'icons/maskable-512x512.png',
+                    sizes: '512x512',
+                    purpose: 'maskable',
+                },
+                {
+                    src: 'icons/transparent-192x192.png',
+                    sizes: '192x192',
+                    purpose: 'any',
+                },
+                {
+                    src: 'icons/maskable-192x192.png',
+                    sizes: '192x192',
+                    purpose: 'maskable',
+                },
+            ],
+        }),
         Components({
             deep: true,
             dts: 'src/types/components.d.ts',
