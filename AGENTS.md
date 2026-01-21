@@ -23,7 +23,11 @@ The core data structures are defined here.
 - **Manga**: Top-level entity (`id`, `title`, `coverUrl`, `chapters[]`).
 - **Chapter**: Contains `number` and a `pages` dictionary.
 - **Pages**: Stored as `Record<string, MangaPage[]>`, where the key is the language code (e.g., 'en', 'es').
-- **MangaPage**: Contains `url` (blob URL), `imageId` (IDB key), and `fileName` (original upload name).
+- **MangaPage**: Contains:
+    - `url`: Blob URL (runtime only).
+    - `imageId`: IDB key for the stored blob.
+    - `fileName`: Original upload name (for sorting).
+    - `isDoublePage`: Boolean flag for landscape/spread images (auto-detected on upload).
 
 ### 2. State Management (`src/composables/useMangaStore.ts`)
 
@@ -50,14 +54,17 @@ The core data structures are defined here.
 
 ### Reader (`src/pages/Reader.vue`)
 
-- **Navigation**:
-    - **Tap**: Left 1/3 (Prev), Right 1/3 (Next).
-    - **Keyboard**: Arrow keys.
-    - **Swipe**: Touch swipe gestures (threshold > 50px).
+- **Navigation (RTL)**:
+    - **Tap/Click**: Left side = Next Page, Right side = Previous Page (Manga style).
+    - **Swipe**: Swipe Left = Next, Swipe Right = Previous.
+    - **Keyboard**: Arrow Left = Next, Arrow Right = Previous.
+- **Double Page Layout (Virtual Slides)**:
+    - Uses a "Virtual Slide" system to align pages across languages.
+    - If **any** language version has a double-page spread at a specific point, other language versions automatically "glue" two single pages together to maintain the same scene structure.
 - **Language Support**:
-    - Dropdown in top bar.
-    - **Double-tap gesture** cycles through available languages.
+    - **Double-tap gesture** or button in the top bar to cycle through available languages.
     - Persists language selection via URL query param (`?lang=en`).
+    - **Seamless Switching**: Switching languages keeps the user on the same "Virtual Slide".
 - **Immersive Mode**: UI toggles visibility on click.
 
 ### Edit Chapter (`src/pages/EditChapter.vue`)
@@ -66,6 +73,7 @@ The core data structures are defined here.
 - **Batch Operations**: Checkbox selection for bulk deletion.
 - **Sorting**: "Sort by Filename" button uses natural sort order (numeric-aware).
 - **Preview**: Clicking a thumbnail opens a full-screen modal overlay.
+- **Auto-Sort**: Files are automatically sorted by filename upon upload.
 
 ## Development Guidelines
 

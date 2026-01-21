@@ -14,20 +14,18 @@
 
             <!-- Language Switcher -->
             <div v-if="availableLanguages.length > 1" class="flex items-center gap-2">
-                <select
-                    v-model="currentLanguage"
-                    class="focus:border-primary-500 rounded border border-gray-600 bg-gray-800 p-1 text-xs text-white outline-none"
-                    @click.stop
+                <button
+                    class="rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-white hover:bg-gray-700"
+                    title="Switch Language"
+                    @click.stop="cycleLanguage"
                 >
-                    <option v-for="lang in availableLanguages" :key="lang" :value="lang">
-                        {{ lang.toUpperCase() }}
-                    </option>
-                </select>
+                    {{ currentLanguage.toUpperCase() }}
+                </button>
             </div>
 
             <div class="text-sm text-gray-400">
-                Chapter {{ chapter.number }} <span class="uppercase">[{{ currentLanguage }}]</span>: Page
-                {{ currentPageIndex + 1 }} / {{ currentPages.length }}
+                Chapter {{ chapter.number }} <span class="uppercase">[{{ currentLanguage }}]</span>: Slide
+                {{ currentSlideIndex + 1 }} / {{ virtualSlides.length }}
             </div>
         </div>
 
@@ -38,26 +36,37 @@
             @touchstart="handleTouchStart"
             @touchend="handleTouchEnd"
         >
-            <div class="relative h-full w-full max-w-3xl">
+            <div class="relative flex h-full w-full max-w-5xl items-center justify-center">
                 <!-- Navigation Zones -->
                 <div
                     class="absolute inset-y-0 left-0 z-10 w-1/3 cursor-w-resize"
-                    title="Previous Page"
-                    @click.stop="prevPage"
-                />
-                <div
-                    class="absolute inset-y-0 right-0 z-10 w-1/3 cursor-e-resize"
                     title="Next Page"
                     @click.stop="nextPage"
                 />
+                <div
+                    class="absolute inset-y-0 right-0 z-10 w-1/3 cursor-e-resize"
+                    title="Previous Page"
+                    @click.stop="prevPage"
+                />
 
-                <!-- Image -->
-                <img
-                    v-if="currentPage"
-                    :src="currentPage.url"
-                    alt="Manga Page"
-                    class="h-auto w-full select-none"
-                >
+                <!-- Images -->
+                <div class="flex h-full w-full items-center justify-center gap-1">
+                    <!-- Left Image (Next Page in RTL) -->
+                    <img
+                        v-if="currentView[1]"
+                        :src="currentView[1].url"
+                        alt="Manga Page Left"
+                        class="h-auto max-h-full w-auto max-w-[50%] object-contain select-none"
+                    >
+                    <!-- Right Image (Current Page in RTL) -->
+                    <img
+                        v-if="currentView[0]"
+                        :src="currentView[0].url"
+                        alt="Manga Page Right"
+                        class="h-auto max-h-full w-auto object-contain select-none"
+                        :class="{ 'max-w-[50%]': currentView.length > 1, 'max-w-full': currentView.length === 1 }"
+                    >
+                </div>
             </div>
         </div>
 
@@ -66,13 +75,13 @@
             v-if="!immersiveMode"
             class="fixed right-0 bottom-0 left-0 z-50 flex items-center justify-between bg-black/80 p-4 backdrop-blur-sm md:hidden"
         >
-            <button class="p-2 text-white disabled:opacity-50" :disabled="currentPageIndex === 0" @click="prevPage">
+            <button class="p-2 text-white disabled:opacity-50" :disabled="currentSlideIndex === 0" @click="prevPage">
                 Prev
             </button>
-            <span class="text-xs">{{ currentPageIndex + 1 }} / {{ currentPages.length }}</span>
+            <span class="text-xs">{{ currentSlideIndex + 1 }} / {{ virtualSlides.length }}</span>
             <button
                 class="p-2 text-white disabled:opacity-50"
-                :disabled="currentPageIndex === currentPages.length - 1"
+                :disabled="currentSlideIndex >= virtualSlides.length - 1"
                 @click="nextPage"
             >
                 Next
@@ -88,6 +97,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMangaStore } from '@/composables/useMangaStore';
+import type { MangaPage } from '@/data/manga';
 
 const route = useRoute();
 const router = useRouter();
@@ -97,7 +107,7 @@ const { mangas } = useMangaStore();
 const manga = computed(() => mangas.value.find((m) => m.chapters.some((c) => c.id === chapterId)));
 const chapter = computed(() => manga.value?.chapters.find((c) => c.id === chapterId));
 
-const currentPageIndex = ref(0);
+const currentSlideIndex = ref(0);
 const immersiveMode = ref(false);
 
 const availableLanguages = computed(() => {
@@ -121,30 +131,101 @@ watch(
 watch(currentLanguage, (newLang) => {
     if (newLang !== route.query.lang) {
         router.replace({ ...route, query: { ...route.query, lang: newLang } });
-        // Try to keep the same page index, clamp if new version has fewer pages
-        if (currentPages.value.length > 0) {
-            currentPageIndex.value = Math.min(currentPageIndex.value, currentPages.value.length - 1);
-        } else {
-            currentPageIndex.value = 0;
-        }
+        // No need to reset page index, we use virtual slides now which align across languages!
     }
 });
 
-const currentPages = computed(() => {
+// Virtual Slide Logic
+// A Virtual Slide represents one "view" (either a single page or a spread)
+// It is consistent across all languages.
+interface VirtualSlide {
+    pages: Record<string, MangaPage[]>; // Lang -> [Pages to show]
+}
+
+const virtualSlides = computed<VirtualSlide[]>(() => {
     if (!chapter.value) return [];
-    // Fallback to first available if selected language doesn't exist
-    const pages = chapter.value.pages[currentLanguage.value];
-    if (pages) return pages;
 
-    // Fallback strategy
-    const firstLang = availableLanguages.value[0];
-    if (firstLang) return chapter.value.pages[firstLang];
+    const slides: VirtualSlide[] = [];
+    const languages = availableLanguages.value;
+    const cursors: Record<string, number> = {}; // Track current page index for each lang
 
-    return [];
+    // Initialize cursors
+    languages.forEach((lang) => (cursors[lang] = 0));
+
+    // We continue until all pages in all languages are consumed
+    // (Assuming mostly consistent length, but handling mismatch safely)
+    while (languages.some((lang) => cursors[lang] < chapter.value!.pages[lang].length)) {
+        const slide: VirtualSlide = { pages: {} };
+        let isDoubleSlot = false;
+
+        // 1. Check if ANY language has a double page at its current cursor
+        for (const lang of languages) {
+            const index = cursors[lang];
+            const pages = chapter.value!.pages[lang];
+            if (index < pages.length && pages[index].isDoublePage) {
+                isDoubleSlot = true;
+                break;
+            }
+        }
+
+        // 2. Consume pages for this slot
+        for (const lang of languages) {
+            const index = cursors[lang];
+            const pages = chapter.value!.pages[lang];
+            const remaining = pages.length - index;
+
+            if (remaining <= 0) {
+                slide.pages[lang] = [];
+                continue;
+            }
+
+            const p1 = pages[index];
+
+            if (isDoubleSlot) {
+                // This is a double slot.
+                if (p1.isDoublePage) {
+                    // Perfect match: Consume 1 double page
+                    slide.pages[lang] = [p1];
+                    cursors[lang]++;
+                } else {
+                    // Mismatch: Attempt to glue 2 single pages
+                    if (remaining >= 2) {
+                        const p2 = pages[index + 1];
+                        if (!p2.isDoublePage) {
+                            // Glue p1 and p2
+                            slide.pages[lang] = [p1, p2];
+                            cursors[lang] += 2;
+                        } else {
+                            // Edge case: p2 is double? shouldn't happen in valid book flow usually
+                            // Just show p1 alone in a double slot (will render half width)
+                            slide.pages[lang] = [p1];
+                            cursors[lang]++;
+                        }
+                    } else {
+                        // Only 1 page left, show it alone
+                        slide.pages[lang] = [p1];
+                        cursors[lang]++;
+                    }
+                }
+            } else {
+                // Single slot
+                slide.pages[lang] = [p1];
+                cursors[lang]++;
+            }
+        }
+        slides.push(slide);
+    }
+
+    return slides;
 });
 
-const currentPage = computed(() => {
-    return currentPages.value[currentPageIndex.value];
+const currentView = computed<MangaPage[]>(() => {
+    if (virtualSlides.value.length === 0) return [];
+    const slide = virtualSlides.value[currentSlideIndex.value];
+    if (!slide) return [];
+
+    // Return pages for current language, or fallback to first available
+    return slide.pages[currentLanguage.value] || slide.pages[availableLanguages.value[0]] || [];
 });
 
 const toggleImmersive = () => {
@@ -152,23 +233,23 @@ const toggleImmersive = () => {
 };
 
 const nextPage = () => {
-    if (currentPages.value && currentPageIndex.value < currentPages.value.length - 1) {
-        currentPageIndex.value++;
+    if (currentSlideIndex.value < virtualSlides.value.length - 1) {
+        currentSlideIndex.value++;
         window.scrollTo(0, 0);
     }
 };
 
 const prevPage = () => {
-    if (currentPageIndex.value > 0) {
-        currentPageIndex.value--;
+    if (currentSlideIndex.value > 0) {
+        currentSlideIndex.value--;
         window.scrollTo(0, 0);
     }
 };
 
 // Keyboard Navigation
 const handleKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowRight') nextPage();
-    if (e.key === 'ArrowLeft') prevPage();
+    if (e.key === 'ArrowRight') prevPage();
+    if (e.key === 'ArrowLeft') nextPage();
     if (e.key === 'Escape') immersiveMode.value = false;
 };
 
@@ -190,8 +271,10 @@ const handleTouchEnd = (e: TouchEvent) => {
     // Swipe detection (horizontal)
     if (Math.abs(distDiff) > 50 && timeDiff < 300) {
         if (distDiff > 0) {
+            // Swipe Left -> Move Next
             nextPage();
         } else {
+            // Swipe Right -> Move Prev
             prevPage();
         }
         return; // Swipe consumed the event
@@ -202,7 +285,6 @@ const handleTouchEnd = (e: TouchEvent) => {
     const tapLength = currentTime - lastTapTime.value;
     if (tapLength < 300 && tapLength > 0 && Math.abs(distDiff) < 10) {
         cycleLanguage();
-        // Prevent immersive toggle on double tap (optional, but good for UX)
         e.stopPropagation();
     }
     lastTapTime.value = currentTime;

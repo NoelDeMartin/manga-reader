@@ -23,6 +23,19 @@ const state = reactive<{ mangas: Manga[] }>({
     mangas: [],
 });
 
+// Helper to get image dimensions
+const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            resolve({ width: img.width, height: img.height });
+            URL.revokeObjectURL(img.src);
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+    });
+};
+
 // Hydrate images from IndexedDB
 const hydrateMangaImages = async (manga: Manga) => {
     for (const chapter of manga.chapters) {
@@ -107,18 +120,26 @@ export const useMangaStore = (): MangaStore => {
     const addChapter = async (mangaId: string, chapterData: { number: number; language: string; files: File[] }) => {
         const manga = state.mangas.find((m) => m.id === mangaId);
         if (manga) {
-            // Sort files by name naturally (e.g. 1.jpg, 2.jpg, 10.jpg)
+            // Sort files by name naturally
             const sortedFiles = [...chapterData.files].sort((a, b) =>
                 a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
+            // Get dimensions for all files
+            const dimensions = await Promise.all(sortedFiles.map(getImageDimensions));
             const imageIds = await saveImages(sortedFiles);
 
-            const newPages: MangaPage[] = sortedFiles.map((file, index) => ({
-                pageNumber: index + 1,
-                url: URL.createObjectURL(file),
-                imageId: imageIds[index],
-                fileName: file.name,
-            }));
+            const newPages: MangaPage[] = sortedFiles.map((file, index) => {
+                const { width, height } = dimensions[index];
+                const isDoublePage = width > height;
+
+                return {
+                    pageNumber: index + 1,
+                    url: URL.createObjectURL(file),
+                    imageId: imageIds[index],
+                    fileName: file.name,
+                    isDoublePage,
+                };
+            });
 
             // Check if chapter number exists
             const chapter = manga.chapters.find((c) => c.number === chapterData.number);
@@ -155,7 +176,7 @@ export const useMangaStore = (): MangaStore => {
         const chapter = manga.chapters.find((c) => c.id === chapterId);
         if (!chapter) return;
 
-        // Ensure language entry exists (if it was added recently)
+        // Ensure language entry exists
         const currentPages = chapter.pages[language] || [];
 
         // 1. Identify deleted images
@@ -173,24 +194,32 @@ export const useMangaStore = (): MangaStore => {
             await deleteImages(idsToDelete);
         }
 
-        // 2. Upload new files
+        // 2. Upload new files and build new pages list
         const newPages: MangaPage[] = [];
         for (let i = 0; i < newPagesData.length; i++) {
             const pageData = newPagesData[i];
             if (pageData.file) {
                 const [id] = await saveImages([pageData.file]);
+                const { width, height } = await getImageDimensions(pageData.file);
+                const isDoublePage = width > height;
+
                 newPages.push({
                     pageNumber: i + 1,
                     url: URL.createObjectURL(pageData.file),
                     imageId: id,
                     fileName: pageData.file.name,
+                    isDoublePage,
                 });
             } else {
+                // Preserve existing page data, including isDoublePage status if it exists
+                // We find the original page object to copy metadata
+                const existingPage = currentPages.find((p) => p.imageId === pageData.imageId);
                 newPages.push({
                     pageNumber: i + 1,
                     url: pageData.url,
                     imageId: pageData.imageId,
                     fileName: pageData.fileName,
+                    isDoublePage: existingPage?.isDoublePage,
                 });
             }
         }
