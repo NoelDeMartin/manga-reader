@@ -31,7 +31,7 @@
 
         <!-- Reader Area -->
         <div
-            class="flex flex-grow items-center justify-center py-0 pb-12 md:py-12"
+            class="flex grow items-center justify-center py-0 pb-12 md:py-12"
             @click="toggleImmersive"
             @touchstart="handleTouchStart"
             @touchend="handleTouchEnd"
@@ -154,14 +154,14 @@ const virtualSlides = computed<VirtualSlide[]>(() => {
 
     // We continue until all pages in all languages are consumed
     // (Assuming mostly consistent length, but handling mismatch safely)
-    while (languages.some((lang) => cursors[lang] < chapter.value!.pages[lang].length)) {
+    while (languages.some((lang) => chapter.value && cursors[lang] < chapter.value.pages[lang].length)) {
         const slide: VirtualSlide = { pages: {} };
         let isDoubleSlot = false;
 
         // 1. Check if ANY language has a double page at its current cursor
         for (const lang of languages) {
             const index = cursors[lang];
-            const pages = chapter.value!.pages[lang];
+            const pages = chapter.value.pages[lang];
             if (index < pages.length && pages[index].isDoublePage) {
                 isDoubleSlot = true;
                 break;
@@ -171,7 +171,7 @@ const virtualSlides = computed<VirtualSlide[]>(() => {
         // 2. Consume pages for this slot
         for (const lang of languages) {
             const index = cursors[lang];
-            const pages = chapter.value!.pages[lang];
+            const pages = chapter.value.pages[lang];
             const remaining = pages.length - index;
 
             if (remaining <= 0) {
