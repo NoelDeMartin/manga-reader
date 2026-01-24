@@ -56,14 +56,18 @@ The core data structures are defined here.
 
 - **Navigation (RTL)**:
     - **Tap/Click**: Left side = Next Page, Right side = Previous Page (Manga style).
-    - **Swipe**: Swipe Left = Next, Swipe Right = Previous.
+    - **Drag/Swipe**:
+        - Drag Right (>50px) = Next Page.
+        - Drag Left (>50px) = Previous Page.
+        - Visual feedback tracks touch movement.
     - **Keyboard**: Arrow Left = Next, Arrow Right = Previous.
 - **Double Page Layout (Virtual Slides)**:
     - Uses a "Virtual Slide" system to align pages across languages.
     - If **any** language version has a double-page spread at a specific point, other language versions automatically "glue" two single pages together to maintain the same scene structure.
 - **Language Support**:
-    - **Double-tap gesture** or button in the top bar to cycle through available languages.
-    - Persists language selection via URL query param (`?lang=en`).
+    - **Cycle Button**: A button in the top bar to cycle through available languages (prevents focus trapping).
+    - **Double-tap gesture**: Also cycles through available languages.
+    - **Persistence**: Persists language selection via URL query param (`?lang=en`).
     - **Seamless Switching**: Switching languages keeps the user on the same "Virtual Slide".
 - **Immersive Mode**: UI toggles visibility on click.
 

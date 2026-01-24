@@ -31,13 +31,17 @@
 
         <!-- Reader Area -->
         <div
-            class="flex grow items-center justify-center py-0 pb-12 md:py-12"
+            class="flex grow items-center justify-center overflow-hidden py-0 pb-12 md:py-12"
             @click="toggleImmersive"
             @touchstart="handleTouchStart"
+            @touchmove="handleTouchMove"
             @touchend="handleTouchEnd"
         >
-            <div class="relative flex h-full w-full max-w-5xl items-center justify-center">
-                <!-- Navigation Zones -->
+            <div
+                class="relative flex h-full w-full max-w-5xl items-center justify-center transition-transform duration-200 ease-out"
+                :style="trackStyle"
+            >
+                <!-- Navigation Zones (Click only) -->
                 <div
                     class="absolute inset-y-0 left-0 z-10 w-1/3 cursor-w-resize"
                     title="Next Page"
@@ -49,23 +53,26 @@
                     @click.stop="prevPage"
                 />
 
-                <!-- Images -->
-                <div class="flex h-full w-full items-center justify-center gap-1">
-                    <!-- Left Image (Next Page in RTL) -->
-                    <img
-                        v-if="currentView[1]"
-                        :src="currentView[1].url"
-                        alt="Manga Page Left"
-                        class="h-auto max-h-full w-auto max-w-[50%] object-contain select-none"
-                    >
-                    <!-- Right Image (Current Page in RTL) -->
-                    <img
-                        v-if="currentView[0]"
-                        :src="currentView[0].url"
-                        alt="Manga Page Right"
-                        class="h-auto max-h-full w-auto object-contain select-none"
-                        :class="{ 'max-w-[50%]': currentView.length > 1, 'max-w-full': currentView.length === 1 }"
-                    >
+                <!-- Images Track -->
+                <div class="flex h-full w-full items-center justify-center">
+                    <!-- Images -->
+                    <div class="flex h-full w-full items-center justify-center gap-1">
+                        <!-- Left Image (Next Page in RTL) -->
+                        <img
+                            v-if="currentView[1]"
+                            :src="currentView[1].url"
+                            alt="Manga Page Left"
+                            class="h-auto max-h-full w-auto max-w-[50%] object-contain select-none"
+                        >
+                        <!-- Right Image (Current Page in RTL) -->
+                        <img
+                            v-if="currentView[0]"
+                            :src="currentView[0].url"
+                            alt="Manga Page Right"
+                            class="h-auto max-h-full w-auto object-contain select-none"
+                            :class="{ 'max-w-[50%]': currentView.length > 1, 'max-w-full': currentView.length === 1 }"
+                        >
+                    </div>
                 </div>
             </div>
         </div>
@@ -255,34 +262,52 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 // Touch Handling
 const touchStartX = ref(0);
+const touchCurrentX = ref(0);
 const touchStartTime = ref(0);
 const lastTapTime = ref(0);
+const isDragging = ref(false);
+
+const trackStyle = computed(() => {
+    if (!isDragging.value) return {};
+    const offset = touchCurrentX.value - touchStartX.value;
+    return { transform: `translateX(${offset}px)` };
+});
 
 const handleTouchStart = (e: TouchEvent) => {
-    touchStartX.value = e.changedTouches[0].screenX;
+    touchStartX.value = e.touches[0].screenX;
+    touchCurrentX.value = touchStartX.value;
     touchStartTime.value = Date.now();
+    isDragging.value = true;
+};
+
+const handleTouchMove = (e: TouchEvent) => {
+    if (!isDragging.value) return;
+    touchCurrentX.value = e.touches[0].screenX;
 };
 
 const handleTouchEnd = (e: TouchEvent) => {
+    isDragging.value = false;
     const touchEndX = e.changedTouches[0].screenX;
-    const timeDiff = Date.now() - touchStartTime.value;
     const distDiff = touchStartX.value - touchEndX;
 
-    // Swipe detection (horizontal)
-    if (Math.abs(distDiff) > 50 && timeDiff < 300) {
-        if (distDiff > 0) {
-            // Swipe Left -> Move Next
+    // Reset transform style
+    // If threshold met, navigate
+    // Threshold: 50px
+    if (Math.abs(distDiff) > 50) {
+        if (distDiff < 0) {
+            // Drag Right (distDiff negative) -> Next Page (RTL)
             nextPage();
         } else {
-            // Swipe Right -> Move Prev
+            // Drag Left (distDiff positive) -> Prev Page (RTL)
             prevPage();
         }
-        return; // Swipe consumed the event
+        return;
     }
 
-    // Double tap detection
+    // Double tap detection logic (unchanged)
     const currentTime = Date.now();
     const tapLength = currentTime - lastTapTime.value;
+    // Check minimal movement to distinguish tap from drag
     if (tapLength < 300 && tapLength > 0 && Math.abs(distDiff) < 10) {
         cycleLanguage();
         e.stopPropagation();
