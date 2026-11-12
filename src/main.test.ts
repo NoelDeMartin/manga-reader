@@ -1,9 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 describe('App', () => {
-
     it('works', () => {
         expect(true).toBe(true);
     });
-
 });
