@@ -1,0 +1,2 @@
+var e={app:{title:{t:0,b:{t:2,i:[{t:3}],s:`Manga Reader`}}},series:{create:{t:0,b:{t:2,i:[{t:3}],s:`Create`}},name:{t:0,b:{t:2,i:[{t:3}],s:`Series name`}},noSeries:{t:0,b:{t:2,i:[{t:3}],s:`No series yet.`}}}};export{e as default};
+//# sourceMappingURL=en-CsBQxXib.js.map

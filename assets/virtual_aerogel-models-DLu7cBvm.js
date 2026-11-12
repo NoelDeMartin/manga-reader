@@ -1,0 +1,2 @@
+import{n as e,r as t,t as n}from"./models-worker-Ci_0qjrz.js";var r=/* @__PURE__ */ t({default:()=>i}),i=n({rdfClass:`http://schema.org/Series`,history:!0,fields:{name:e().useAsSlug()}}),a=/* @__PURE__ */ t({default:()=>o}),o=class extends i{static cloud=!0},s=/* #__PURE__ */ Object.assign({"/src/models/Series.schema.ts":r,"/src/models/Series.ts":a});export{s as default};
+//# sourceMappingURL=virtual_aerogel-models-DLu7cBvm.js.map
