@@ -1,2 +1,7 @@
 app:
     title: 'Manga Reader'
+
+series:
+    create: Create
+    name: Series name
+    noSeries: No series yet.

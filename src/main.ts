@@ -6,8 +6,8 @@ import solid from '@aerogel/plugin-solid';
 
 import './assets/css/main.css';
 import App from './App.vue';
-import routes from './pages/index';
+import routes, { bindings } from './pages/index';
 
 export default await bootstrap(App, {
-    plugins: [i18n(), routing({ routes }), solid(), localFirst()],
+    plugins: [i18n(), routing({ routes, bindings }), solid(), localFirst()],
 });

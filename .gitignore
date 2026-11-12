@@ -4,5 +4,6 @@
 /playwright-report
 /solid
 /src/types/components.d.ts
+/src/types/models.d.ts
 /storybook-static
 /test-results
