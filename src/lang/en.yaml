@@ -5,3 +5,8 @@ series:
     create: Create
     name: Series name
     noSeries: No series yet.
+
+chapters:
+    create: Create
+    number: Chapter number
+    noChapters: No chapters yet.
