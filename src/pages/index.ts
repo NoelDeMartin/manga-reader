@@ -1,11 +1,16 @@
 import { defineRouteBindings, defineRoutes } from '@aerogel/plugin-routing';
 
-import Series from '@/models/Series.ts';
+import ChapterModel from '@/models/Chapter.ts';
+import SeriesModel from '@/models/Series.ts';
 
+import Chapter from './Chapter.vue';
 import Home from './Home.vue';
-import SeriesShow from './SeriesShow.vue';
+import Series from './Series.vue';
 
-export const bindings = defineRouteBindings({ series: Series });
+export const bindings = defineRouteBindings({
+    series: SeriesModel,
+    chapter: ChapterModel,
+});
 
 export default defineRoutes([
     {
@@ -14,8 +19,13 @@ export default defineRoutes([
         component: Home,
     },
     {
-        name: 'series.show',
-        path: '/series/:series',
-        component: SeriesShow,
+        name: 'series',
+        path: '/:series',
+        component: Series,
+    },
+    {
+        name: 'chapter',
+        path: '/:series/:chapter',
+        component: Chapter,
     },
 ]);

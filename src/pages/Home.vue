@@ -11,7 +11,7 @@
             <ul v-if="series.length > 0" class="divide-y divide-gray-200 dark:divide-gray-800">
                 <li v-for="item in series" :key="item.url" class="py-2 text-gray-900 dark:text-gray-100">
                     <Link
-                        route="series.show"
+                        route="series"
                         :route-params="{ series: item.requireSlug() }"
                         :route-query="isLocalUrl(item.url) ? undefined : { url: item.url }"
                     >
