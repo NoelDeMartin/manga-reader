@@ -31,7 +31,7 @@ import { useLoading } from '@aerogel/core';
 import { Solid } from '@aerogel/plugin-solid';
 import { uploadSolidFile } from '@noeldemartin/solid-utils';
 import { arraySorted } from '@noeldemartin/utils';
-import { Container, remote, type ModelWithUrl } from 'soukai-bis';
+import { Container, isLocalUrl, remote, type ModelWithUrl } from 'soukai-bis';
 import { ref, watchEffect } from 'vue';
 
 import type Chapter from '@/models/Chapter';
@@ -78,16 +78,20 @@ async function uploadFiles(files: File[]) {
 }
 
 watchEffect(async () => {
-    if (!Solid.isLoggedIn()) {
+    const containerUrl = chapter.getContainerUrl();
+
+    if (!Solid.isLoggedIn() || !containerUrl || isLocalUrl(containerUrl)) {
         pages.value = [];
 
         return;
     }
 
-    const container = await remote(Container).findOrFail(chapter.requireContainerUrl());
+    const container = await remote(Container).find(containerUrl);
     const chapterDocumentUrl = chapter.getDocumentUrl();
 
-    pages.value = arraySorted(container.resourceUrls.filter((url) => !url.endsWith('/') && url !== chapterDocumentUrl));
+    pages.value = container
+        ? arraySorted(container.resourceUrls.filter((url) => !url.endsWith('/') && url !== chapterDocumentUrl))
+        : [];
     selectedPage.value ??= pages.value[0] ?? null;
 });
 </script>

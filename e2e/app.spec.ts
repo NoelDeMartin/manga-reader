@@ -61,6 +61,7 @@ test('Upload chapter pages', async ({ page }) => {
 
     await input(page, 'Series name').fill('One Piece');
     await press(page, 'Create');
+    await waitSync(page);
     await press(page, 'One Piece');
 
     await input(page, 'Chapter number').fill('001');
