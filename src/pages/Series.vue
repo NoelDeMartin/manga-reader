@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { useForm, useLoading } from '@aerogel/core';
 import { isLocalUrl, type ModelWithUrl } from 'soukai-bis';
-import { onMounted } from 'vue';
+import { watchEffect } from 'vue';
 import { z } from 'zod';
 
 import type Series from '@/models/Series';
@@ -51,7 +51,7 @@ async function createChapter() {
     form.reset();
 }
 
-onMounted(async () => {
+watchEffect(async () => {
     await series.loadRelationIfUnloaded('chapters');
 });
 </script>

@@ -7,7 +7,7 @@ export default defineSchema({
     history: true,
     fields: {
         name: z.string().useAsContainerSlug(),
-        chapterUrls: z.array(z.string()).default([]).rdfProperty('hasPart'),
+        chapterUrls: z.array(z.url()).default([]).rdfProperty('hasPart'),
     },
     relations: {
         chapters: belongsToMany('Chapter', 'chapterUrls'),
