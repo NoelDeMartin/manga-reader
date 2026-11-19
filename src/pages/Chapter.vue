@@ -28,10 +28,8 @@
 
 <script setup lang="ts">
 import { useLoading } from '@aerogel/core';
-import { Solid } from '@aerogel/plugin-solid';
-import { uploadSolidFile } from '@noeldemartin/solid-utils';
-import { arraySorted } from '@noeldemartin/utils';
-import { Container, isLocalUrl, remote, type ModelWithUrl } from 'soukai-bis';
+import { computedModelAttribute } from '@aerogel/plugin-solid';
+import type { ModelWithUrl } from 'soukai-bis';
 import { ref, watchEffect } from 'vue';
 
 import type Chapter from '@/models/Chapter';
@@ -39,7 +37,7 @@ import type Series from '@/models/Series';
 
 const { chapter } = defineProps<{ series: ModelWithUrl<Series>; chapter: ModelWithUrl<Chapter> }>();
 const { loading: uploading, run: runUploading } = useLoading({ delay: 200 });
-const pages = ref<string[] | null>(null);
+const pages = computedModelAttribute(() => chapter, 'pageUrls');
 const selectedPage = ref<string | null>(null);
 
 async function uploadPages(event: Event) {
@@ -56,42 +54,14 @@ async function uploadPages(event: Event) {
 }
 
 async function uploadFiles(files: File[]) {
-    if (!Solid.isLoggedIn()) {
-        throw new Error('User must be logged in to upload images.');
-    }
-
-    const fetch = Solid.requireAuthenticator().requireAuthenticatedFetch();
-    const containerUrl = chapter.requireContainerUrl();
-    const baseContainerUrl = containerUrl.endsWith('/') ? containerUrl : `${containerUrl}/`;
-    const uploadedUrls: string[] = [];
+    await chapter.loadRelationIfUnloaded('container');
 
     for (const file of files) {
-        const fileUrl = new URL(encodeURIComponent(file.name), baseContainerUrl).href;
-
-        await uploadSolidFile(fileUrl, file, { fetch });
-
-        uploadedUrls.push(fileUrl);
+        await chapter.relatedContainer.uploadFile(file);
     }
-
-    pages.value = arraySorted(Array.from(new Set([...(pages.value ?? []), ...uploadedUrls])));
-    selectedPage.value ??= pages.value[0] ?? null;
 }
 
-watchEffect(async () => {
-    const containerUrl = chapter.getContainerUrl();
-
-    if (!Solid.isLoggedIn() || !containerUrl || isLocalUrl(containerUrl)) {
-        pages.value = [];
-
-        return;
-    }
-
-    const container = await remote(Container).find(containerUrl);
-    const chapterDocumentUrl = chapter.getDocumentUrl();
-
-    pages.value = container
-        ? arraySorted(container.resourceUrls.filter((url) => !url.endsWith('/') && url !== chapterDocumentUrl))
-        : [];
-    selectedPage.value ??= pages.value[0] ?? null;
+watchEffect(() => {
+    selectedPage.value ??= pages.value?.[0] ?? null;
 });
 </script>

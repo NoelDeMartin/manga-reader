@@ -1,14 +1,13 @@
+import { FilesStrategies } from '@aerogel/plugin-local-first';
 import { stringToSlug, urlParentDirectory, urlRoute, uuid } from '@noeldemartin/utils';
-import type { HasOneRelation, MintUrlOptions } from 'soukai-bis';
+import type { MintUrlOptions } from 'soukai-bis';
 
 import Model from './Chapter.schema';
-import type Series from './Series';
 
 export default class Chapter extends Model {
-    public static cloud = true;
-
-    declare public readonly series?: Series;
-    declare public readonly relatedSeries: HasOneRelation<this, Series, typeof Series>;
+    public static cloud = {
+        files: FilesStrategies.Container,
+    };
 
     public static slugFromUrl(url: string): string | null {
         const languageContainerUrl = urlParentDirectory(urlRoute(url));

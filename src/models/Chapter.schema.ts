@@ -1,4 +1,5 @@
-import { defineSchema, hasOne } from 'soukai-bis';
+import { arraySorted } from '@noeldemartin/utils';
+import { InvalidationStrategies, defineSchema, hasOne, isContainedBy, loaded } from 'soukai-bis';
 import { z } from 'zod';
 
 export default defineSchema({
@@ -11,5 +12,12 @@ export default defineSchema({
     },
     relations: {
         series: hasOne('Series', 'chapterUrls'),
+        container: isContainedBy('Container'),
+    },
+    computed: {
+        pageUrls: {
+            invalidationStrategy: InvalidationStrategies.Container,
+            compute: (chapter): string[] => arraySorted(loaded(chapter, 'container')?.fileUrls ?? []),
+        },
     },
 });
