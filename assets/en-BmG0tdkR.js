@@ -1,0 +1,2 @@
+var e={app:{title:{t:0,b:{t:2,i:[{t:3}],s:`Manga Reader`}}},series:{create:{t:0,b:{t:2,i:[{t:3}],s:`Create`}},name:{t:0,b:{t:2,i:[{t:3}],s:`Series name`}},noSeries:{t:0,b:{t:2,i:[{t:3}],s:`No series yet.`}}},chapters:{create:{t:0,b:{t:2,i:[{t:3}],s:`Create`}},number:{t:0,b:{t:2,i:[{t:3}],s:`Chapter number`}},noChapters:{t:0,b:{t:2,i:[{t:3}],s:`No chapters yet.`}},noPages:{t:0,b:{t:2,i:[{t:3}],s:`No pages found for this chapter.`}},uploadPages:{t:0,b:{t:2,i:[{t:3}],s:`Upload pages`}}}};export{e as default};
+//# sourceMappingURL=en-BmG0tdkR.js.map
