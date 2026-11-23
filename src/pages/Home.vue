@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import { useForm, useLoading } from '@aerogel/core';
-import { useModels } from '@aerogel/plugin-solid';
+import { useModels } from '@aerogel/reactivity';
 import { isLocalUrl } from 'soukai-bis';
 import { z } from 'zod';
 

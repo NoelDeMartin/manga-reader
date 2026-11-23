@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import { useLoading } from '@aerogel/core';
-import { computedModelAttribute } from '@aerogel/plugin-solid';
+import { computedModelAttribute } from '@aerogel/reactivity';
 import type { ModelWithUrl } from 'soukai-bis';
 import { ref, watchEffect } from 'vue';
 
