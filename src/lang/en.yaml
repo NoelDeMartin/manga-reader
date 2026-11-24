@@ -13,3 +13,45 @@ chapters:
     noChapters: No chapters yet.
     noPages: No pages found for this chapter.
     uploadPages: Upload pages
+
+reader:
+    backToSeries: Back to {series}
+    chapterLabel: 'Chapter {number}'
+    chapterShort: 'Ch. {number}'
+    loadingPages: Loading pages...
+    uploadHint: Drag and drop manga pages here, or choose image files from your device.
+    uploading: Uploading pages...
+    dropToUpload: Drop images to upload pages
+    previousPage: Previous page
+    nextPage: Next page
+    previousChapter: Previous chapter
+    nextChapter: Next chapter
+    pageSlider: Page navigation
+    pageAlt: 'Page {page} of {total}'
+    toggleControls: Toggle reader controls
+    settings: Reader settings
+    closeSettings: Close reader settings
+    fullscreen: Enter fullscreen
+    exitFullscreen: Exit fullscreen
+    endOfChapter: End of Chapter {number}
+    backToSeriesAction: Back to series
+    mode:
+        label: Reading mode
+        single: Single
+        double: Double
+        vertical: Vertical
+    direction:
+        label: Reading direction
+        rtl: Right to left
+        ltr: Left to right
+        rtlShort: RTL
+        ltrShort: LTR
+    fit:
+        label: Page fit
+        contain: Fit screen
+        width: Fit width
+    theme:
+        label: Background
+        dark: Dark
+        light: Light
+    shortcuts: '← → Turn page · Space Next · H Hide UI · F Fullscreen'

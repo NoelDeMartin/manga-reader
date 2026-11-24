@@ -1,47 +1,28 @@
 <template>
-    <Page :title="`${series.name}, ${activeChapter.number} (${renderLanguage(activeChapter.language)})`">
-        <div class="flex flex-col gap-4">
-            <Select
-                v-if="availableLanguages.length > 1"
-                :model-value="activeChapter.language"
-                :label="$t('chapters.language')"
-                :options="availableLanguages.map((c) => c.language)"
-                :render-option="renderLanguage"
-                @update:model-value="switchLanguage"
-            />
-
-            <label class="flex flex-col gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <span class="flex items-center gap-2">
-                    <span>{{ $t('chapters.uploadPages') }}</span>
-                    <i-svg-spinners-180-ring v-if="uploading" class="size-4" />
-                </span>
-                <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    :disabled="uploading"
-                    class="block w-full text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-gray-700 hover:file:bg-gray-200 disabled:opacity-50 dark:text-gray-400 dark:file:bg-gray-800 dark:file:text-gray-200 dark:hover:file:bg-gray-700"
-                    @change="uploadPages"
-                />
-            </label>
-
-            <template v-if="pages?.length">
-                <Select v-model="selectedPage" :options="pages" />
-                <SolidImage v-if="selectedPage" :src="selectedPage" />
-            </template>
-            <i-svg-spinners-180-ring v-else-if="!pages" class="size-10" />
-            <p v-else class="text-center text-gray-500">{{ $t('chapters.noPages') }}</p>
-        </div>
-    </Page>
+    <ChapterReader
+        :series-name="series.name"
+        :chapter-number="activeChapter.number"
+        :series-route="seriesRoute"
+        :pages="pages"
+        :languages="languageOptions"
+        :active-language="activeChapter.language"
+        :uploading="uploading"
+        :previous-chapter="previousChapter"
+        :next-chapter="nextChapter"
+        @switch-language="switchLanguage"
+        @upload="uploadPages"
+    />
 </template>
 
 <script setup lang="ts">
 import { useLoading } from '@aerogel/core';
 import { computedModelAttribute } from '@aerogel/reactivity';
-import type { ModelWithUrl } from 'soukai-bis';
-import { computed, ref, watchEffect } from 'vue';
+import { isLocalUrl, type ModelWithUrl } from 'soukai-bis';
+import { computed, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import ChapterReader from '@/components/reader/ChapterReader.vue';
+import type { ReaderChapterLink, ReaderLanguageOption } from '@/components/reader/types';
 import type Chapter from '@/models/Chapter';
 import type Series from '@/models/Series';
 import { renderLanguage } from '@/utils/languages';
@@ -50,32 +31,81 @@ const { series, chapter } = defineProps<{ series: ModelWithUrl<Series>; chapter:
 const route = useRoute();
 const router = useRouter();
 const { loading: uploading, run: runUploading } = useLoading({ delay: 200 });
-const selectedPage = ref<string | null>(null);
+
 const availableLanguages = computed(() => [chapter, ...(chapter.translations ?? [])]);
+const languageOptions = computed<ReaderLanguageOption[]>(() =>
+    availableLanguages.value.map((item) => ({
+        code: item.language,
+        label: renderLanguage(item.language),
+    })),
+);
+
 const activeChapter = computed(() => {
     const language = typeof route.query.language === 'string' ? route.query.language : null;
 
     return (language && chapter.translations?.find((translation) => translation.language === language)) || chapter;
 });
+
 const pages = computedModelAttribute(() => activeChapter.value, 'pageUrls');
 
-async function switchLanguage(language: string | string[]) {
-    const targetLanguage = Array.isArray(language) ? language[0] : language;
-    const target = availableLanguages.value.find((c) => c.language === targetLanguage);
+const seriesRoute = computed(() => ({
+    name: 'series',
+    params: { series: series.requireSlug() },
+    query: isLocalUrl(series.url) ? undefined : { url: series.url },
+}));
+
+const sortedChapters = computed(() =>
+    [...(series.chapters ?? [])].sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true })),
+);
+
+const currentChapterIndex = computed(() => sortedChapters.value.findIndex((item) => item.url === chapter.url));
+
+const previousChapter = computed<ReaderChapterLink | null>(() => {
+    const prev = currentChapterIndex.value > 0 ? sortedChapters.value[currentChapterIndex.value - 1] : null;
+
+    if (!prev) {
+        return null;
+    }
+
+    return {
+        number: prev.number,
+        to: prev.route,
+    };
+});
+
+const nextChapter = computed<ReaderChapterLink | null>(() => {
+    const next =
+        currentChapterIndex.value >= 0 && currentChapterIndex.value < sortedChapters.value.length - 1
+            ? sortedChapters.value[currentChapterIndex.value + 1]
+            : null;
+
+    if (!next) {
+        return null;
+    }
+
+    return {
+        number: next.number,
+        to: next.route,
+    };
+});
+
+async function switchLanguage(language: string) {
+    const target = availableLanguages.value.find((c) => c.language === language);
 
     if (!target || target.language === activeChapter.value.language) {
         return;
     }
 
+    await chapter.loadRelationIfUnloaded('series');
+
+    if (target !== chapter) {
+        await target.loadRelationIfUnloaded('mainVersion');
+    }
+
     await router.push(target.route);
 }
 
-async function uploadPages(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const files: File[] = Array.from(input.files ?? []);
-
-    input.value = '';
-
+async function uploadPages(files: File[]) {
     if (files.length === 0) {
         return;
     }
@@ -92,18 +122,10 @@ async function uploadFiles(files: File[]) {
 }
 
 watchEffect(async () => {
-    await chapter.loadRelationIfUnloaded('translations');
-});
-
-watchEffect(() => {
-    if (!pages.value?.length) {
-        selectedPage.value = null;
-
-        return;
-    }
-
-    if (!selectedPage.value || !pages.value.includes(selectedPage.value)) {
-        selectedPage.value = pages.value[0] ?? null;
-    }
+    await Promise.all([
+        chapter.loadRelationIfUnloaded('series'),
+        chapter.loadRelationIfUnloaded('translations'),
+        series.loadRelationIfUnloaded('chapters'),
+    ]);
 });
 </script>

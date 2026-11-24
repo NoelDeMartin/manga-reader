@@ -50,7 +50,8 @@ test('Manage chapters', async ({ page }) => {
 
     await press(page, '001');
 
-    await see(page, 'One Piece, 001');
+    await see(page, 'One Piece');
+    await see(page, 'Chapter 001');
     await see(page, 'No pages found for this chapter.');
 });
 
@@ -69,10 +70,12 @@ test('Upload chapter pages', async ({ page }) => {
     await waitSync(page);
     await press(page, '001');
 
-    await see(page, 'One Piece, 001');
+    await see(page, 'One Piece');
+    await see(page, 'Chapter 001');
     await see(page, 'No pages found for this chapter.');
 
     await page
+        .getByRole('banner')
         .getByLabel('Upload pages')
         .setInputFiles([
             path.join(import.meta.dirname, 'fixtures/001.png'),
@@ -80,13 +83,37 @@ test('Upload chapter pages', async ({ page }) => {
         ]);
 
     await dontSee(page, 'No pages found for this chapter.');
-    await expect(page.locator('img')).toBeVisible();
-    await expect(page.getByRole('combobox')).toContainText('001.png');
+    await expect(page.getByRole('img', { name: 'Page 1 of 2' })).toBeVisible();
+    await see(page, '1 / 2');
+
+    // Page navigation
+    await page.getByRole('button', { name: 'Next page' }).click();
+    await expect(page.getByRole('img', { name: 'Page 2 of 2' })).toBeVisible();
+    await see(page, '2 / 2');
+
+    await page.getByRole('button', { name: 'Previous page' }).click();
+    await expect(page.getByRole('img', { name: 'Page 1 of 2' })).toBeVisible();
+    await see(page, '1 / 2');
+
+    // Reader settings & persistence
+    await page.getByRole('button', { name: 'Reader settings' }).click();
+    await page.getByRole('button', { name: 'Left to right' }).click();
+    await page.getByRole('button', { name: 'Light' }).click();
+    await page.getByRole('button', { name: 'Close reader settings' }).click();
+    await see(page, 'LTR');
 
     await page.reload();
 
-    await see(page, 'One Piece, 001');
+    await see(page, 'One Piece');
+    await see(page, 'Chapter 001');
     await dontSee(page, 'No pages found for this chapter.');
-    await expect(page.getByRole('combobox')).toContainText('001.png');
-    await expect(page.locator('img')).toBeVisible();
+    await see(page, '1 / 2');
+    await see(page, 'LTR');
+    await expect(page.getByRole('img', { name: 'Page 1 of 2' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Reader settings' }).click();
+    await expect(page.getByRole('button', { name: 'Left to right' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: 'Light' })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Vertical' }).click();
+    await expect(page.getByRole('img', { name: 'Page 2 of 2' })).toBeVisible();
 });

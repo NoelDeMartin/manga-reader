@@ -27,5 +27,14 @@ export default defineRoutes([
         name: 'chapter',
         path: '/:series/:chapter',
         component: Chapter,
+        meta: {
+            showHeader: false,
+        },
     },
 ]);
+
+declare module 'vue-router' {
+    interface RouteMeta {
+        showHeader?: boolean;
+    }
+}
