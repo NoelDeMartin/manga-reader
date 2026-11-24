@@ -1,6 +1,15 @@
 <template>
-    <Page :title="`${series.name}, ${chapter.number}`">
+    <Page :title="`${series.name}, ${activeChapter.number} (${renderLanguage(activeChapter.language)})`">
         <div class="flex flex-col gap-4">
+            <Select
+                v-if="availableLanguages.length > 1"
+                :model-value="activeChapter.language"
+                :label="$t('chapters.language')"
+                :options="availableLanguages.map((c) => c.language)"
+                :render-option="renderLanguage"
+                @update:model-value="switchLanguage"
+            />
+
             <label class="flex flex-col gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                 <span class="flex items-center gap-2">
                     <span>{{ $t('chapters.uploadPages') }}</span>
@@ -30,15 +39,36 @@
 import { useLoading } from '@aerogel/core';
 import { computedModelAttribute } from '@aerogel/reactivity';
 import type { ModelWithUrl } from 'soukai-bis';
-import { ref, watchEffect } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import type Chapter from '@/models/Chapter';
 import type Series from '@/models/Series';
+import { renderLanguage } from '@/utils/languages';
 
-const { chapter } = defineProps<{ series: ModelWithUrl<Series>; chapter: ModelWithUrl<Chapter> }>();
+const { series, chapter } = defineProps<{ series: ModelWithUrl<Series>; chapter: ModelWithUrl<Chapter> }>();
+const route = useRoute();
+const router = useRouter();
 const { loading: uploading, run: runUploading } = useLoading({ delay: 200 });
-const pages = computedModelAttribute(() => chapter, 'pageUrls');
 const selectedPage = ref<string | null>(null);
+const availableLanguages = computed(() => [chapter, ...(chapter.translations ?? [])]);
+const activeChapter = computed(() => {
+    const language = typeof route.query.language === 'string' ? route.query.language : null;
+
+    return (language && chapter.translations?.find((translation) => translation.language === language)) || chapter;
+});
+const pages = computedModelAttribute(() => activeChapter.value, 'pageUrls');
+
+async function switchLanguage(language: string | string[]) {
+    const targetLanguage = Array.isArray(language) ? language[0] : language;
+    const target = availableLanguages.value.find((c) => c.language === targetLanguage);
+
+    if (!target || target.language === activeChapter.value.language) {
+        return;
+    }
+
+    await router.push(target.route);
+}
 
 async function uploadPages(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -54,14 +84,26 @@ async function uploadPages(event: Event) {
 }
 
 async function uploadFiles(files: File[]) {
-    await chapter.loadRelationIfUnloaded('container');
+    await activeChapter.value.loadRelationIfUnloaded('container');
 
     for (const file of files) {
-        await chapter.relatedContainer.uploadFile(file);
+        await activeChapter.value.relatedContainer.uploadFile(file);
     }
 }
 
+watchEffect(async () => {
+    await chapter.loadRelationIfUnloaded('translations');
+});
+
 watchEffect(() => {
-    selectedPage.value ??= pages.value?.[0] ?? null;
+    if (!pages.value?.length) {
+        selectedPage.value = null;
+
+        return;
+    }
+
+    if (!selectedPage.value || !pages.value.includes(selectedPage.value)) {
+        selectedPage.value = pages.value[0] ?? null;
+    }
 });
 </script>

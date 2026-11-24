@@ -8,6 +8,7 @@ series:
 
 chapters:
     create: Create
+    language: Language
     number: Chapter number
     noChapters: No chapters yet.
     noPages: No pages found for this chapter.

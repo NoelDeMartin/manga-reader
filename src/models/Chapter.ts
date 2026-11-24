@@ -18,19 +18,24 @@ export default class Chapter extends Model {
     }
 
     public get route(): RouteLocationRaw {
-        const series = required(this.series);
+        const mainVersion = this.mainVersion ?? this;
+        const series = required(mainVersion.series);
         const query: Record<string, string> = {};
         const params = {
             series: series.requireSlug(),
-            chapter: this.requireSlug(),
+            chapter: mainVersion.requireSlug(),
         };
+
+        if (this.mainVersion) {
+            query.language = this.language;
+        }
 
         if (series.url && !isLocalUrl(series.url)) {
             query.seriesUrl = series.url;
         }
 
-        if (this.url && !isLocalUrl(this.url)) {
-            query.url = this.url;
+        if (mainVersion.url && !isLocalUrl(mainVersion.url)) {
+            query.url = mainVersion.url;
         }
 
         return {
@@ -40,13 +45,27 @@ export default class Chapter extends Model {
         };
     }
 
+    public async createTranslation(language: string): Promise<Chapter> {
+        return this.relatedTranslations.create({
+            number: this.number,
+            language,
+        });
+    }
+
     protected newUrlDocumentUrl(options: MintUrlOptions = {}): string {
+        const language = this.language ?? 'en';
+        const mainVersionContainerUrl = this.mainVersion?.getContainerUrl();
+        const chapterContainerUrl = mainVersionContainerUrl && urlParentDirectory(mainVersionContainerUrl);
+
+        if (chapterContainerUrl) {
+            return `${chapterContainerUrl}${language}${options.slugSuffix ?? ''}/index`;
+        }
+
         if (!this.series?.getContainerUrl()) {
             return super.newUrlDocumentUrl(options);
         }
 
         const slug = stringToSlug(this.number) || uuid();
-        const language = this.language ?? 'en';
 
         return `${this.series.requireContainerUrl()}${slug}${options.slugSuffix ?? ''}/${language}/index`;
     }
