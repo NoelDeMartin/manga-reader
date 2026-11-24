@@ -217,7 +217,7 @@ importers:
         version: 0.1.2-next.c08db4ab585a424df259d5f85a671080637af02f(d87d194a527a931e0ef8665bf7b745a4)
       '@aerogel/plugin-routing':
         specifier: next
-        version: 0.1.2-next.36b7b5ffed62741628aab3dea3488e41d062be57(30bbb8970d2a2e65914ead55d745e429)
+        version: 0.1.2-next.f80be53bcc95762609f2f7bc91f60f3926a05192(30bbb8970d2a2e65914ead55d745e429)
       '@aerogel/plugin-solid':
         specifier: next
         version: 0.1.2-next.dae7da988bab05010b57517174ae6481df433500(c2f99b67052e34d57eb9b49dd5c56df2)
@@ -365,8 +365,8 @@ packages:
       soukai-bis: '*'
       vue: ^3.5.0
 
-  '@aerogel/plugin-routing@0.1.2-next.36b7b5ffed62741628aab3dea3488e41d062be57':
-    resolution: {integrity: sha512-p7rGnyXnIGEq2IPgUdVpoTJeGdv/rSBl3SGxa/bedxjziBxbgmok8jyG47HyD7HhzQa5n/ri5STUo7khc0T/AA==}
+  '@aerogel/plugin-routing@0.1.2-next.f80be53bcc95762609f2f7bc91f60f3926a05192':
+    resolution: {integrity: sha512-FViExtZrNCmhQdb+ThebBxQsihKI7ooDrCARUKim6DHGGGOO4cQgx5Zl+oxz8Q+5yMA7oN5zgGSOV5/Dgob8bA==}
     peerDependencies:
       '@aerogel/core': '*'
       '@aerogel/plugin-solid': '*'
@@ -3975,8 +3975,8 @@ packages:
     resolution: {integrity: sha512-+ys997U96po4Kx/ABpBCqhA9EuxJaQWDQg7295H4hBphv3IZg0boBKuwYpt4YXp6MZ5AmZQnU/tyMTlRpaSejg==}
     engines: {node: '>= 0.4'}
 
-  caniuse-lite@1.0.30001826:
-    resolution: {integrity: sha512-wTB+9tIbLro/BCXwLuNV1meHE4L9dS6dArMDwgYfNBPMYScqClHyGunhkCSDtHhe/69Xl0sHlKgBVZ+fNsYtWA==}
+  caniuse-lite@1.0.30001827:
+    resolution: {integrity: sha512-YWEDr46gSO81M8w6uPbaIy4++IXsirx2asUqvllNiD4BPf75ibxclUjWEqp8ObCenRv+UM2n5Y8xuRPT8V8FrQ==}
 
   canonicalize@1.0.8:
     resolution: {integrity: sha512-0CNTVCLZggSh7bc5VkX5WWPWO+cyZbNd07IHIsSXLia/eAq+r836hgk+8BKoEh7949Mda87VUOitx5OddVj64A==}
@@ -6989,7 +6989,7 @@ snapshots:
       - vitest
       - web-streams-polyfill
 
-  '@aerogel/plugin-routing@0.1.2-next.36b7b5ffed62741628aab3dea3488e41d062be57(30bbb8970d2a2e65914ead55d745e429)':
+  '@aerogel/plugin-routing@0.1.2-next.f80be53bcc95762609f2f7bc91f60f3926a05192(30bbb8970d2a2e65914ead55d745e429)':
     dependencies:
       '@aerogel/core': 0.1.2-next.36b7b5ffed62741628aab3dea3488e41d062be57(@tailwindcss/forms@0.5.11(tailwindcss@4.3.5))(@tailwindcss/typography@0.5.20(tailwindcss@4.3.5))(tailwindcss@4.3.5)(typescript@6.0.3)(vite-plus@1.7.0(@types/node@26.6.6)(@vitest/ui@5.1.0)(@volar/typescript@2.4.30(typescript@6.0.3))(@vue/language-core@3.3.14)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.65.1)(terser@5.51.4)(typescript@6.0.3)(vue-tsc@3.3.14(typescript@6.0.3))(yaml@2.9.1))(vitest@5.1.0)(vue@3.5.46(typescript@6.0.3))(web-streams-polyfill@3.3.3)(zod@4.6.7)
       '@aerogel/plugin-solid': 0.1.2-next.dae7da988bab05010b57517174ae6481df433500(c2f99b67052e34d57eb9b49dd5c56df2)
@@ -11607,7 +11607,7 @@ snapshots:
   browserslist@4.29.6:
     dependencies:
       baseline-browser-mapping: 2.11.39
-      caniuse-lite: 1.0.30001826
+      caniuse-lite: 1.0.30001827
       electron-to-chromium: 1.5.492
       node-releases: 2.0.65
       update-browserslist-db: 1.4.0(browserslist@4.29.6)
@@ -11667,7 +11667,7 @@ snapshots:
       call-bind-apply-helpers: 1.0.2
       get-intrinsic: 1.3.0
 
-  caniuse-lite@1.0.30001826: {}
+  caniuse-lite@1.0.30001827: {}
 
   canonicalize@1.0.8: {}
 

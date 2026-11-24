@@ -14,14 +14,7 @@
 
         <ul v-if="series.chapters?.length" class="divide-y divide-gray-200 dark:divide-gray-800">
             <li v-for="chapter of series.chapters" :key="chapter.url" class="py-2 text-gray-900 dark:text-gray-100">
-                <Link
-                    route="chapter"
-                    :route-params="{
-                        series: series.requireSlug(),
-                        chapter: chapter.requireSlug(),
-                    }"
-                    :route-query="!chapter.url || isLocalUrl(chapter.url) ? undefined : { url: chapter.url }"
-                >
+                <Link :to="chapter.route">
                     {{ chapter.number }}
                 </Link>
             </li>
@@ -34,7 +27,7 @@
 
 <script setup lang="ts">
 import { useForm, useLoading } from '@aerogel/core';
-import { isLocalUrl, type ModelWithUrl } from 'soukai-bis';
+import { type ModelWithUrl } from 'soukai-bis';
 import { watchEffect } from 'vue';
 import { z } from 'zod';
 
