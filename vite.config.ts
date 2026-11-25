@@ -8,4 +8,7 @@ export default defineConfig({
     plugins: [Aerogel({ name: 'Manga Reader' }), Workspace()],
     fmt,
     lint: { extends: [lint] },
+    test: {
+        environment: 'happy-dom',
+    },
 });

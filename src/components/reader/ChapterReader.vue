@@ -31,6 +31,7 @@
             :pages="pages"
             :current-page="currentPage"
             :secondary-page="secondaryPage"
+            :page-step="pageStep"
             :chapter-number="chapterNumber"
             :series-route="seriesRoute"
             :next-chapter="nextChapter"

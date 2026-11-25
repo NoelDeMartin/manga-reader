@@ -96,13 +96,13 @@ async function switchLanguage(language: string) {
         return;
     }
 
-    await chapter.loadRelationIfUnloaded('series');
+    const { language: _, ...query } = route.query;
 
-    if (target !== chapter) {
-        await target.loadRelationIfUnloaded('mainVersion');
-    }
-
-    await router.push(target.route);
+    await router.push({
+        name: 'chapter',
+        params: route.params,
+        query: target === chapter ? query : { ...query, language: target.language },
+    });
 }
 
 async function uploadPages(files: File[]) {

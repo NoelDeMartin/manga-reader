@@ -55,6 +55,37 @@ test('Manage chapters', async ({ page }) => {
     await see(page, 'No pages found for this chapter.');
 });
 
+test('Switch chapter languages', async ({ page }) => {
+    await page.goto('/');
+
+    await input(page, 'Series name').fill('One Piece');
+    await press(page, 'Create');
+    await press(page, 'One Piece');
+
+    await input(page, 'Chapter number').fill('001');
+    await press(page, 'Create');
+    await see(page, '001');
+
+    await input(page, 'Chapter number').fill('001');
+    await page.getByRole('combobox').fill('Japanese');
+    await page.getByRole('option', { name: 'Japanese' }).click();
+    await press(page, 'Create');
+    await see(page, 'Japanese');
+
+    await page.reload();
+    await press(page, '001');
+
+    await see(page, 'Chapter 001');
+
+    await page.getByRole('combobox', { name: 'Language' }).selectOption('ja');
+    await expect(page).toHaveURL(/language=ja/);
+    await dontSee(page, 'Required value is missing');
+
+    await page.getByRole('combobox', { name: 'Language' }).selectOption('en');
+    await expect(page).not.toHaveURL(/language=ja/);
+    await dontSee(page, 'Required value is missing');
+});
+
 test('Upload chapter pages', async ({ page }) => {
     await solidReset();
     await page.goto('/');
@@ -86,12 +117,32 @@ test('Upload chapter pages', async ({ page }) => {
     await expect(page.getByRole('img', { name: 'Page 1 of 2' })).toBeVisible();
     await see(page, '1 / 2');
 
-    // Page navigation
+    // Page navigation (buttons)
     await page.getByRole('button', { name: 'Next page' }).click();
     await expect(page.getByRole('img', { name: 'Page 2 of 2' })).toBeVisible();
     await see(page, '2 / 2');
 
     await page.getByRole('button', { name: 'Previous page' }).click();
+    await expect(page.getByRole('img', { name: 'Page 1 of 2' })).toBeVisible();
+    await see(page, '1 / 2');
+
+    // Page navigation (dragging in RTL: drag right -> next, drag left -> previous)
+    const canvasBox = await page.locator('main').boundingBox();
+    expect(canvasBox).not.toBeNull();
+    const { x, y, width, height } = canvasBox!;
+    const midY = y + height / 2;
+
+    await page.mouse.move(x + width * 0.25, midY);
+    await page.mouse.down();
+    await page.mouse.move(x + width * 0.75, midY, { steps: 5 });
+    await page.mouse.up();
+    await expect(page.getByRole('img', { name: 'Page 2 of 2' })).toBeVisible();
+    await see(page, '2 / 2');
+
+    await page.mouse.move(x + width * 0.75, midY);
+    await page.mouse.down();
+    await page.mouse.move(x + width * 0.25, midY, { steps: 5 });
+    await page.mouse.up();
     await expect(page.getByRole('img', { name: 'Page 1 of 2' })).toBeVisible();
     await see(page, '1 / 2');
 
